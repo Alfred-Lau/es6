@@ -1,0 +1,12 @@
+{
+    "type":"json",
+    "data":[
+        {
+            "id": 1,
+            "avatar": "ouye"
+        },{
+            "id": 2,
+            "avatar": "come on baby"
+        }
+    ]
+}

@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ES6</title>
+</head>
+<div>
+    <em>需浏览器支持 script 标签的 type = module 属性</em>
+    <em>当 script 设为 type = module 会失去跨域特性，必须同源</em>
+</div>
+<body>
+    <script type="module">
+        // 模块导入
+        import {m} from './i.js';
+        console.log(m)
+
+    </script>
+</body>
+</html>
