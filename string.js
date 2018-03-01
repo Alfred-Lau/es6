@@ -131,19 +131,76 @@
 
 }
 
-// TODO: padStart(), padEnd()
+// TODO: padStart(), padEnd()：均接受两个参数，第一个用来指定字符串的最小长度，第二个参数是用来补全的字符串
 {
+    /* 
+    
+    - 如果原字符串的长度等于或者大于指定的最小长度，则返回原字符串
+    - 如果用来补全的字符串与原字符串，两者的长度之和超过了指定的最小长度，则会截去超出位数的补全字符串。
+    - 如果省略第二个参数，默认使用空格补全长度
+    
+    */
+    let s = 'world';
+    // 头部补齐
+    let res = s.padStart(10,'a');
+    console.log(res);
+    // 尾部补齐
+    console.log(s.padEnd(10, 'b'));
+    
+    /* 
+    
+    padStart的常见用途：为数值补全指定位数；提示字符串格式
+    
+    */
+   
+    let str01 = '1'.padStart(10, '0');
+    
+    let str02 = '09-12'.padStart(10, 'YYYY-MM-DD');
+    
+    console.log(str01,str02);
+
+    
 
 }
 
 // TODO: matchAll()的使用
 {
 
+    // 返回一个正则表达式在当前字符串的所有匹配
+    let target = 'hello,world!koa,hello';
+    // let matchArr = target.matchAll(/hello/);
+    // console.log(matchArr);
+    
+
 }
 
 // TODO:模板字符串
 {
 
+    /* 
+    
+    - 当做普通字符串
+    - 定义多行字符串
+    - 在字符串中嵌入变量
+    
+    */
+   
+    let val = 100;
+    let normalStr = `i am normal`;
+    let multStr = `I am
+    multible`;
+    let usage = `this is general ${val} : the time is ${(new Date()).toDateString()}`;
+    console.log(normalStr, multStr, usage);
+    
+    /* 
+
+    - 如果在模板字符串中需要使用反引号，则前面要用反斜杠转义。
+    - 如果使用模板字符串表示多行字符串，所有的空格和缩进都会被保留在输出之中。
+    
+    */
+   
+    
+    
 }
 
 // TODO:标签模板
