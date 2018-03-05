@@ -134,32 +134,30 @@
 // TODO: padStart(), padEnd()：均接受两个参数，第一个用来指定字符串的最小长度，第二个参数是用来补全的字符串
 {
     /* 
-    
-    - 如果原字符串的长度等于或者大于指定的最小长度，则返回原字符串
-    - 如果用来补全的字符串与原字符串，两者的长度之和超过了指定的最小长度，则会截去超出位数的补全字符串。
-    - 如果省略第二个参数，默认使用空格补全长度
-    
-    */
+  
+  - 如果原字符串的长度等于或者大于指定的最小长度，则返回原字符串
+  - 如果用来补全的字符串与原字符串，两者的长度之和超过了指定的最小长度，则会截去超出位数的补全字符串。
+  - 如果省略第二个参数，默认使用空格补全长度
+  
+  */
     let s = 'world';
     // 头部补齐
-    let res = s.padStart(10,'a');
+    let res = s.padStart(10, 'a');
     console.log(res);
     // 尾部补齐
     console.log(s.padEnd(10, 'b'));
-    
-    /* 
-    
-    padStart的常见用途：为数值补全指定位数；提示字符串格式
-    
-    */
-   
-    let str01 = '1'.padStart(10, '0');
-    
-    let str02 = '09-12'.padStart(10, 'YYYY-MM-DD');
-    
-    console.log(str01,str02);
 
-    
+    /* 
+  
+  padStart的常见用途：为数值补全指定位数；提示字符串格式
+  
+  */
+
+    let str01 = '1'.padStart(10, '0');
+
+    let str02 = '09-12'.padStart(10, 'YYYY-MM-DD');
+
+    console.log(str01, str02);
 
 }
 
@@ -168,9 +166,8 @@
 
     // 返回一个正则表达式在当前字符串的所有匹配
     let target = 'hello,world!koa,hello';
-    // let matchArr = target.matchAll(/hello/);
-    // console.log(matchArr);
-    
+    // let matchArr = target.matchAll(/hello/)
+    // console.log(matchArr)
 
 }
 
@@ -178,33 +175,143 @@
 {
 
     /* 
-    
-    - 当做普通字符串
-    - 定义多行字符串
-    - 在字符串中嵌入变量
-    
-    */
-   
+  
+  - 当做普通字符串
+  - 定义多行字符串
+  - 在字符串中嵌入变量
+  
+  */
+
     let val = 100;
     let normalStr = `i am normal`;
     let multStr = `I am
     multible`;
     let usage = `this is general ${val} : the time is ${(new Date()).toDateString()}`;
     console.log(normalStr, multStr, usage);
-    
+
     /* 
 
-    - 如果在模板字符串中需要使用反引号，则前面要用反斜杠转义。
-    - 如果使用模板字符串表示多行字符串，所有的空格和缩进都会被保留在输出之中。
+  - 如果在模板字符串中需要使用反引号，则前面要用反斜杠转义。
+  - 如果使用模板字符串表示多行字符串，所有的空格和缩进都会被保留在输出之中。
+  
+  */
+
+    // 转义
+    let greeting = `\`Yo\`,world`;
+    console.log(greeting);
+
+    // TODO: 
+    /* 
+  
+  - 使用jsdom结合jQuery在nodejs之中使用jQuery操作html文件
+  - trim方法处理掉空格和缩进:trim,trimLeft,trimRight,可以直接跟在模板字符串后面
+  
+  */
+    const { JSDOM } = require('jsdom');
+
+    JSDOM.fromFile('./index.html').then(dom => {
+        let $ = require('jquery')(dom.window);
+
+        // 注意：不太可能把jsom的内容写回到HTML之中
+        $('.root').html(`
+        <ul>
+            <li>first</li>
+            <li>second</li>
+            <li>third</li>
+        </ul>
+        `);
+        console.log($('.root').html());
+        $('.root').html(`
+        <ul>
+            <li>first</li>
+            <li>second</li>
+            <li>third</li>
+        </ul>
+        `.trim());
+        console.log($('.root').html());
+    });
+
+    /* 
+    
+    模板字符串的变量大括号之中可以放入任意的JavaScript表达式：
+    - 可以进行运算
+    - 引用对象属性
+    - 调用函数
+    - 如果大括号之中的值不是字符串，将按照一般的规则转换为字符串。比如，大括号之中是一个对象，将默认调用对象的toString方法
+    - 如果模板字符串中的变量没有声明，将报错
+    - 如果大括号内部是一个字符串，将会原样输出
+    - 模板字符串还可以嵌套
+    - 如果需要引用模板字符串本身，需要这样处理
     
     */
    
-    
-    
+    let x = 1;
+    let y = 2;
+    let obj = { a: 5, d: 5 };
+    // 可以感觉出来console.log()的异步，下面的一句反而比较快执行结束
+    console.log(`${x + 3}${y + obj.a}`);
+    const fn = ()=>'hello';
+    console.log(`${fn()}`);
+    console.log(`${{ s: 1 }}`);
+    console.log(`${'he'}`);
+
+    const tmpl = addrs => `
+  <table>
+  ${addrs
+        .map(addr => `
+    <tr><td>${addr.first}</td></tr>
+    <tr><td>${addr.last}</td></tr>
+  `)
+        .join('')}
+  </table>
+`;
+    // 上面代码中，模板字符串的变量之中，又嵌入了另一个模板字符串，使用方法如下。
+
+    const data = [
+        {
+            first: '<Jane>',
+            last: 'Bond'
+        }, {
+            first: 'Lars',
+            last: '<Croft>'
+        }
+    ];
+
+    console.log(tmpl(data));
+    // <table>
+
+    // 如果需要引用模板字符串本身，在需要时执行，可以像下面这样写。
+
+    // 写法一
+    let str = 'return `Hello ${name}!`';
+    let func = new Function('name', str);
+    console.log(func('Jack')); // "Hello Jack!"
+
+    // 写法二
+    let str02 = '(name) => `Hello ${name}!`';
+    let func02 = eval.call(null, str02);
+    console.log(func02('Jack')); // "Hello Jack!"
+
 }
 
 // TODO:标签模板
 {
+    /* 
+    
+    - 模板字符串的功能，不仅仅是上面那些。它可以跟在一个函数名后面，该函数将被用来处理这个模板字符串。
+    - 标签模板其实不是模板， 而是函数调用的一种特殊形式。“ 标签” 指的就是函数， 紧跟在后面的模板字符串就是它的参数。
+    - 如果模板字符里面有变量， 就不是简单的调用了， 而是会将模板字符串先处理成多个参数， 再调用函数。
+    - 函数的第一个参数是一个数组， 该数组的成员是模板字符串中那些没有变量替换的部分， 也就是说， 变量替换只发生在数组的第一个成员与第二个成员之间、 第二个成员与第三个成员之间， 以此类推。
+
+    
+    */
+    //标签模板的作用
+
+    /* 
+    
+    - 标签模板的一个重要作用就是过滤HTML字符串
+
+    */
 
 }
 
