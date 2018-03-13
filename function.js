@@ -160,15 +160,59 @@
     
     
     // 作用域
+
+    /* 需要思考一下
+    一旦设置了参数的默认值， 函数进行声明初始化时， 参数会形成一个单独的作用域（ context）。 等到初始化结束， 这个作用域就会消失。 这种语法行为， 在不设置参数默认值时， 是不会出现的。
     
 
-    
+        var x = 1;
+
+        function foo(x, y = function () {x = 2;}) {
+            x = 3;
+            y();
+            console.log(x);
+        }
+
+        foo(); // 2
+        x; // 1
+    */
     
     // 应用
+
+    /* 
+    
+    函数参数默认值的作用：
+
+    - 可以指定某一个参数不得省略，如果省略就抛出一个错误
+    - 可以将函数参数设置为undefined，表示这个参数是可以省略的
+    
+    */
+   
+    // 指定某一个函数参数不得省略
+    const throwError = () => {
+        throw new Error('Missing params');
+    };
+    
+    const throwErrorTest = (param = throwError()) => {
+        return param;
+    };
+
+    throwErrorTest('s');
+
+    // 表示某个参数是可以省略的
+    
+    const isOmitted = (param = undefined) => {
+        return param;
+    };
+    isOmitted();
+    isOmitted('s');
+
+
 }
 // 2.1 rest参数
 {
 
+    
 }
 
 {
