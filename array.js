@@ -176,36 +176,201 @@
 
 }
 
-// 2.1. Array.from()
+// 2.1. Array.from():可接受三个参数：Array.from(arrayLike, x => x * x)
+
 {
 
     /* 
 
   Array.from方法用于将两类对象转为真正的数组：
-  - 类似数组的对象（array-like object） 
+  - 类似数组的对象（array-like object） :常见的包括DOM操作返回的NodeList集合，函数内部的arguments对象
   - 可遍历（iterable）的对象（包括 ES6 新增的数据结构 Set 和 Map）。
   
   */
 
+    // 类数组对象转换为数组：es5
+
+    // 如果缺少索引0的时候就会填充一个<1 empty item>
+    let arrayLike = {
+        0: 'a',
+        1: 'b',
+        2: 'c',
+        length: 3
+    };
+    console.log([].slice.call(arrayLike));
+
+    // 类数组对象转换为数组：es6
+    console.log(Array.from(arrayLike));
+
+    // 部署了Iterator接口的对象：字符串，Map，Set
+
+    // 如果参数是一个真正的数组，Array.from会返回一个一模一样的新数组。
+    const origin = [1, 2, 4];
+    const copy = Array.from(origin);
+    console.log(copy);
+
+    function argumentsTest () {
+        console.log([...arguments]);
+    }
+
+    argumentsTest('d', 's');
+
+    /* 
+  
+  所谓类似数组的对象，本质特征只有一点，即必须有length属性。因此，任何有length属性的对象，都可以通过Array.from方法转为数组，而此时扩展运算符就无法转换。
+  
+  */
+
+    /* 
+  对于还没有部署该方法的浏览器，可以用Array.prototype.slice方法替代。
+
+  const toArray = (() =>
+  Array.from ? Array.from : obj => [].slice.call(obj)
+  )()
+  
+  */
+
+    // Array.from还可以接受第二个参数，作用类似于数组的map方法，用来对每个元素进行处理，将处理后的值放入返回的数组。如果map函数里面用到了this关键字，还可以传入Array.from的第三个参数，用来绑定this。
+    const arrayLike01 = {
+        length: 3,
+        0: 2,
+        1: 3,
+        2: 4
+    };
+
+    console.log(Array.from(arrayLike01, x => x * x));
+    // 等同于
+    Array.from(arrayLike01).map(x => x * x);
+
+    Array.from([1, 2, 3], (x) => x * x); // [1, 4, 9]
+
+    // Array.from()可以将各种值转为真正的数组，并且还提供map功能。这实际上意味着，只要有一个原始的数据结构，你就可以先对它的值进行处理，然后转成规范的数组结构，进而就可以使用数量众多的数组方法。
+
+    Array.from({
+        length: 2
+    }, () => 'jack');
+    // ['jack', 'jack']
+    // 上面代码中，Array.from的第一个参数指定了第二个参数运行的次数。这种特性可以让该方法的用法变得非常灵活。
+
 }
 
-// 3.1. Array.of()
+// 3.1. Array.of()：用于将一组值转换为数组
 {
+    /* 
+  
+  这个方法的主要目的，是弥补数组构造函数Array()的不足。因为参数个数的不同，会导致Array()的行为有差异。
+
+  */
+
+    Array(); // []
+    Array(3); // [, , ,]
+    Array(3, 11, 8); // [3, 11, 8]
+    // 上面代码中，Array方法没有参数、一个参数、三个参数时，返回结果都不一样。只有当参数个数不少于 2 个时，Array()才会返回由参数组成的新数组。参数个数只有一个时，实际上是指定数组的长度。
+
+    // Array.of基本上可以用来替代Array()或new Array()，并且不存在由于参数不同而导致的重载。它的行为非常统一。
+
+    Array.of(); // []
+    Array.of(undefined); // [undefined]
+    Array.of(1); // [1]
+    Array.of(1, 2); // [1, 2]
+    // Array.of总是返回参数值组成的数组。如果没有参数，就返回一个空数组。
+
+    // Array.of方法可以用下面的代码模拟实现。
+
+    function ArrayOf () {
+        return [].slice.call(arguments);
+    }
 
 }
 
-// 4.1. 数组实例的 copyWithin()
+// 4.1. 数组实例的 copyWithin()：会修改当前数组
 {
+
+    /* 
+  
+  数组实例的copyWithin方法，在当前数组内部，将指定位置的成员复制到其他位置（会覆盖原有成员），然后返回当前数组。也就是说，使用这个方法，会修改当前数组。
+
+  Array.prototype.copyWithin(target, start = 0, end = this.length)
+它接受三个参数。
+
+  - target（必需）：从该位置开始替换数据。如果为负值，表示倒数。
+  - start（可选）：从该位置开始读取数据，默认为 0。如果为负值，表示倒数。
+  - end（可选）：到该位置前停止读取数据，默认等于数组长度。如果为负值，表示倒数。
+
+  这三个参数都应该是数值，如果不是，会自动转为数值。
+
+  
+  */
+
+    console.log([1, 2, 3, 4, 5].copyWithin(0, 3)); // [4, 5, 3, 4, 5]
+
+    // 将3号位复制到0号位
+    [1, 2, 3, 4, 5].copyWithin(0, 3, 4) // [4, 2, 3, 4, 5] 
+
+    // - 2相当于3号位，-1相当于4号位
+    ;[1, 2, 3, 4, 5].copyWithin(0, -2, -1); // [4, 2, 3, 4, 5] 
+
+    // [].copyWithin.call({length: 5,3: 1}, 0, 3)// {0: 1, 3: 1, length: 5} 将2号位到数组结束，复制到0号位
+
+    let i32a = new Int32Array([1, 2, 3, 4, 5]);
+    i32a.copyWithin(0, 2); // Int32Array [3, 4, 5, 4, 5] 对于没有部署 TypedArray 的 copyWithin 方法的平台 需要采用下面的写法
+
+    [].copyWithin.call(new Int32Array([1, 2, 3, 4, 5]), 0, 3, 4); // Int32Array [4, 2, 3, 4, 5]
 
 }
 
-// 5.1. 数组实例的find()和findIndex()
+// 5.1. 数组实例的find()和findIndex():这两个方法都可以接受第二个参数，用来绑定回调函数的this对象。
 {
+    /* 
+  - 数组实例的find方法，用于找出第一个符合条件的数组成员。
+  - 它的参数是一个回调函数，所有数组成员依次执行该回调函数，直到找出第一个返回值为true的成员，然后返回该成员。如果没有符合条件的成员，则返回undefined。
+  -find方法的回调函数可以接受三个参数，依次为当前的值、当前的位置和原数组。
+
+  */
+
+    console.log([1, 4, -5, 10].find(n => n < 0))
+
+    ;[1, 5, 10, 15].find(function (value, index, arr) {
+        return value > 9;
+    }); // 10
+
+    /* 
+  
+  数组实例的findIndex方法的用法与find方法非常类似，返回第一个符合条件的数组成员的位置，如果所有成员都不符合条件，则返回-1。
+  
+  */
+
+    // 这两个方法都可以接受第二个参数，用来绑定回调函数的this对象。
+
+    function f (v) {
+        return v > this.age;
+    }
+    let person = {
+        name: 'John',
+        age: 20
+    };
+    console.log([10, 12, 26, 15].find(f, person)) // 26
+
+    // 另外，这两个方法都可以发现NaN，弥补了数组的indexOf方法的不足。
+
+    ;[NaN].indexOf(NaN) // -1
+
+    ;[NaN].findIndex(y => Object.is(NaN, y)); // 0
+
+    // 上面代码中，indexOf方法无法识别数组的NaN成员，但是findIndex方法可以借助Object.is方法做到。
 
 }
 
-// 6.1. 数组实例的fill()
+// 6.1. 数组实例的fill():使用给定值，填充一个数组，fill方法还可以接受第二个和第三个参数，用于指定填充的起始位置和结束位置。左开右闭
 {
+
+    // 方便的初始化一个数组：fill方法用于空数组的初始化非常方便。数组中已有的元素，会被全部抹去。
+    ['a', 'b', 'c'].fill(7);
+    // [7, 7, 7]
+
+    new Array(3).fill(7);
+    // [7, 7, 7]
+    console.log([1, 3, 5, 7, 9].fill('s', 1, 3));
 
 }
 
