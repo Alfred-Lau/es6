@@ -372,14 +372,57 @@
     // [7, 7, 7]
     console.log([1, 3, 5, 7, 9].fill('s', 1, 3));
 
+    // 注意，如果填充的类型为对象，那么被赋值的是同一个内存地址的对象，而不是深拷贝对象。
+
+    let arr = new Array(3).fill({name: 'Mike'});
+    arr[0].name = 'Ben';
+    arr; // [{name: "Ben"}, {name: "Ben"}, {name: "Ben"}]
+
+    let arr = new Array(3).fill([]);
+    arr[0].push(5);
+    arr; // [[5], [5], [5]]
+
 }
 
 // 7.1. 数组实例的entries(), keys(), values()
 {
 
+    /* 
+  
+  ES6 提供三个新的方法——entries()，keys()和values()——用于遍历数组。它们都返回一个遍历器对象（详见《Iterator》一章），可以用for...of循环进行遍历，唯一的区别是keys()是对键名的遍历、values()是对键值的遍历，entries()是对键值对的遍历。
+  
+  */
+
+    for (let index of ['a', 'b'].keys()) {
+        console.log(index);
+    }
+    // 0
+    // 1
+
+    for (let elem of ['a', 'b'].values()) {
+        console.log(elem);
+    }
+    // 'a'
+    // 'b'
+
+    for (let [index, elem] of ['a', 'b'].entries()) {
+        console.log(index, elem);
+    }
+    // 0 "a"
+    // 1 "b"  
+
+
+    // 如果不使用for ...of循环，可以手动调用遍历器对象的next方法，进行遍历。
+
+    let letter = ['a', 'b', 'c'];
+    let entries = letter.entries();
+    console.log(entries.next().value); // [0, 'a']
+    console.log(entries.next().value); // [1, 'b']
+    console.log(entries.next().value); // [2, 'c']
+
 }
 
-// 8.1.数组实例的includes()
+// 8.1.数组实例的includes():返回一个布尔值，表示某个数组是否包含给定的值，和字符串的includes方法类似
 {
 
 }
