@@ -230,6 +230,12 @@
 
   - 如果非对象参数出现在源对象的位置（ 即非首参数）， 那么处理规则有所不同。 首先， 这些参数都会转成对象， 如果无法转成对象， 就会跳过。 这意味着， 如果undefined和null不在首参数， 就不会报错。
 
+  - 其他类型的值（ 即数值、 字符串和布尔值） 不在首参数， 也不会报错。 但是， 除了字符串会以数组形式， 拷贝入目标对象， 其他值都不会产生效果。 这是因为只有字符串的包装对象， 会产生可枚举属性。
+
+  - Object.assign拷贝的属性是有限制的， 只拷贝源对象的自身属性（ 不拷贝继承属性）， 也不拷贝不可枚举的属性（ enumerable: false）。
+
+  - 属性名为 Symbol 值的属性， 也会被Object.assign拷贝。
+
   
   */
 
@@ -238,8 +244,183 @@
     const source02 = {age:10};
     console.log(Object.assign(target, source01, source02));
 
+    const target02 = {
+        a:1
+    };
+
+    console.log(Object.assign(target02, undefined));//不报错，不产生影响
+    console.log(Object.assign(target02, null));//不报错，不产生影响
+
+    console.log(Object.assign(target02, 'name'));
+
+    Object.assign({
+        b: 'c'
+    },
+    Object.defineProperty({}, 'invisible', {
+        enumerable: false,
+        value: 'hello'
+    })
+    );
+    // { b: 'c' }
+
+    Object.assign({a: 'b'}, {[Symbol('c')]: 'd'});
+    // { a: 'b', Symbol(c): 'd' }
+
+
+    /* 
     
+    注意点：
+
+    1） 浅拷贝： Object.assign方法实行的是浅拷贝， 而不是深拷贝。 也就是说， 如果源对象某个属性的值是对象， 那么目标对象拷贝得到的是这个对象的引用。
+    2）同名属性的替换
+    3）数组的处理
+    4）取值函数的处理
+    
+    */
+
+    // 浅拷贝
+    const obj01 = { a: { b: 1 }, c: 3 };
+    const obj02 = Object.assign({}, obj01);
+    obj01.a.b = 2;
+    obj01.c = 4;
+    console.log(obj02.a.b, obj02.c);//2 3
+    
+    // 同名属性替换:对于嵌套的对象，一旦遇到同名属性，处理方法是替换而不是添加,这通常不是开发者想要的，需要特别小心。一些函数库提供Object.assign的定制版本（ 比如 Lodash 的_.defaultsDeep方法）， 可以得到深拷贝的合并。
+    const targetFinal = { a: { b: 'c', 'd': 2 } };
+    const source = { a: { b: 'hello' } };
+    console.log(Object.assign(targetFinal, source));
+
+    // 数组的处理
+    console.log(Object.assign([1, 2, 3], [4, 5])); //[ 4, 5, 3 ]
+    
+    // 取值函数的处理:Object.assign只能进行值的复制，如果要复制的值是一个取值函数，那么将求值后再复制。
+    const sourceFinal = {
+        get foo(){return 1;}
+    };
+    console.log(Object.assign({}, sourceFinal)); //{ foo: 1 }
+    //上面代码中，source对象的foo属性是一个取值函数，Object.assign不会复制这个取值函数，只会拿到值以后，将这个值复制过去。
+
+    
+
+    
+    /* 
+    
+    常见用途：
+
+    1）为对象添加属性
+    2）为对象添加方法
+    3）克隆对象
+    4）合并多个对象
+    5）为属性指定默认值
+    
+    
+    */
+   
+    // 为对象添加属性
+    
+    // TODO: 像下面这样写不会把this指针替换掉吗？不会，同名属性才会被替换掉
+    class Point {
+        constructor(x, y) {
+            Object.assign(this, { x, y });
+        }
+    }
+
+    // 为对象添加方法
+
+    class Test {}
+    Object.assign(Test.prototype, {
+        methodOne() { },
+        metheodTwo(){}
+    });
+
+    // 等同于如下的写法
+    Test.prototype.someMethod = function (arg1, arg2) {};
+    Test.prototype.anotherMethod = function () {};
+
+
+    // 克隆对象
+    const clone = (origin) => {
+        const _clone = Object.assign;
+        return _clone({}, origin);
+    };
+
+    console.log(clone({a:'test clone'}));
+
+    // 上述方法只能克隆对象自身的值，不能克隆它继承的值，如果想要保持继承链，可以采用下面的代码
+
  
+    function Parent() {
+        this.age = 21;
+    }
+
+    const p1 = new Parent();
+
+    function Child() {
+        this.name = 'dsds';
+    }
+
+    // 原型继承的基础方法
+    Child.prototype = p1;
+
+    const c1 = new Child();
+
+    const cloneWithInherit= (origin) => {
+        // 得到拷贝对象继承的属性
+        let originProto = Object.getPrototypeOf(origin);
+        console.log(originProto);
+        // 使用Object的create方法，依据给定的特定原型对象和属性创建新的对象
+        return Object.assign(Object.create(originProto), origin);
+    };
+    console.log(cloneWithInherit(c1));
+
+    // 合并多个对象
+
+    // 1. 将多个对象合并到某个对象。
+
+    const merge = (target, ...sources) => Object.assign(target, ...sources);
+    
+        
+    // 2. 如果希望合并后返回一个新对象， 可以改写上面函数， 对一个空对象合并。
+
+    const merge = (...sources) => Object.assign({}, ...sources);
+    
+
+    // 为属性指定默认值
+    /* 
+    const DEFAULTS = {
+        logLevel: 0,
+        outputFormat: 'html'
+    };
+
+    function processContent(options) {
+        options = Object.assign({}, DEFAULTS, options);
+        console.log(options);
+        // ...
+    }
+    上面代码中， DEFAULTS对象是默认值， options对象是用户提供的参数。 Object.assign方法将DEFAULTS和options合并成一个新对象， 如果两者有同名属性， 则option的属性值会覆盖DEFAULTS的属性值。
+
+    注意， 由于存在浅拷贝的问题， DEFAULTS对象和options对象的所有属性的值， 最好都是简单类型， 不要指向另一个对象。 否则， DEFAULTS对象的该属性很可能不起作用。
+
+    const DEFAULTS = {
+        url: {
+            host: 'example.com',
+            port: 7070
+        },
+    };
+
+    processContent({
+        url: {
+            port: 8000
+        }
+    })
+    // {
+    //   url: {port: 8000}
+    // }
+    上面代码的原意是将url.port改成 8000， url.host不变。 实际结果却是options.url覆盖掉DEFAULTS.url， 所以url.host就不存在了。
+
+
+
+*/
   
 
 }
