@@ -377,12 +377,12 @@
 
     // 1. 将多个对象合并到某个对象。
 
-    const merge = (target, ...sources) => Object.assign(target, ...sources);
+    let merge = (target, ...sources) => Object.assign(target, ...sources);
     
         
     // 2. 如果希望合并后返回一个新对象， 可以改写上面函数， 对一个空对象合并。
 
-    const merge = (...sources) => Object.assign({}, ...sources);
+    merge = (...sources) => Object.assign({}, ...sources);
     
 
     // 为属性指定默认值
@@ -425,32 +425,345 @@
 
 }
 
-// 6.1 属性的可枚举性和遍历
+// 6.1 属性的可枚举性和遍历:!!! 对象的每一个属性都有一个描述对象，用来控制该属性的行为，Object.getOwnPropertyDescriptor方法可以获得该属性的描述对象
 {
+    const desc = { a: [1, 2, 3] };
+    
+    res = Object.getOwnPropertyDescriptor(desc, 'a');
+
+    /* {
+        value: [1, 2, 3],
+        writable: true,
+        enumerable: true,//可枚举性
+        configurable: true
+    }
+
+    目前，有四个操作会忽略enumerable为false的属性
+
+    1）for...in循环：只遍历对象自身的和继承的可枚举的属性 
+    2）Object.keys()：返回对象自身的所有可枚举的属性的键名
+    3）JSON.stirngify()：只串行化对象自身的可枚举的属性
+    4）Object.assign()： 只拷贝对象自身的可枚举的属性。
+
+
+    - 这四个操作之中， 前三个是 ES5 就有的， 最后一个Object.assign() 是 ES6 新增的。 
+    - 只有for...in会返回继承的属性， 其他三个方法都会忽略继承的属性， 只处理对象自身的属性。 
+    - 实际上， 引入“ 可枚举”（ enumerable） 这个概念的最初目的， 就是让某些属性可以规避掉for...in操作， 不然所有内部属性和方法都会被遍历到。 比如， 对象原型的toString方法， 以及数组的length属性， 就通过“ 可枚举性”， 从而避免被for...in遍历到。
+
+    Object.getOwnPropertyDescriptor(Object.prototype, 'toString').enumerable// false
+
+    Object.getOwnPropertyDescriptor([], 'length').enumerable// false
+
+    上面代码中， toString和length属性的enumerable都是false， 因此for...in不会遍历到这两个继承自原型的属性。
+
+    另外， ES6 规定， 所有 Class 的原型的方法都是不可枚举的。
+
+    Object.getOwnPropertyDescriptor(class {foo() {}}.prototype, 'foo').enumerable// false
+    
+    总的来说， 操作中引入继承的属性会让问题复杂化， 大多数时候， 我们只关心对象自身的属性。 所以， 尽量不要用for...in循环， 而用Object.keys() 代替。
+
+    */
+    console.log(res);
+
+
+
+    // 属性的遍历
+
+    /* 
+    
+    es6一共有5种方法可以便利对象的属性
+
+    1. for...in
+    循环遍历对象自身的和继承的可枚举关系，不含Symbol属性
+    2. Object.keys(obj)
+    返回一个数组，
+    3. Object.getOwnPropertyNames(obj)
+    4. Object.getOwnPropertySymbols(obj)
+    5. Reflect.ownKeys(obj)
+    
+    
+    */
 
 }
 
 // 7.1 Object.getOwnPropertyDescriptors()
 {
+    const obj = {
+        foo: 123,
+        get bar() {
+            return 'abc';
+        }
+    };
+
+    // Object.getOwnPropertyDescriptors方法，返回指定对象所有自身属性（非继承属性）的描述对象。
+    console.log(Object.getOwnPropertyDescriptors(obj));
+
+    // Object.getOwnPropertyDescriptor方法会返回某个对象属性的描述对象（descriptor）
+    console.log(Object.getOwnPropertyDescriptor(obj, 'foo'));
+
+    // 模拟实现
+
+    const getOwnPropertyDescriptorPollify = (obj) => {
+        let result = {};
+        for (const key of Reflect.ownKeys(obj)) {
+            result[key] = Object.getOwnPropertyDescriptor(obj, key);
+        }
+        return result;
+    };
+
+    console.log('i am a pollify: ', getOwnPropertyDescriptorPollify(obj));
+
+    // 上述方法引入原因是：解决Object.assign()无法正确拷贝get属性和set属性的问题
+
+    const source = {
+        set foo(val) {
+            console.log(val);      
+        }
+    };
+
+    const target1 = {};
+    Object.assign(target1, source);
+
+    console.log(Object.getOwnPropertyDescriptor(target1, 'foo'));
+    /*   
+    {
+        value: undefined,
+        writable: true,
+        enumerable: true,
+        configurable: true
+    }
+
+    上面代码中， source对象的foo属性的值是一个赋值函数， Object.assign方法将这个属性拷贝给target1对象， 结果该属性的值变成了undefined。 这是因为Object.assign方法总是拷贝一个属性的值， 而不会拷贝它背后的赋值方法或取值方法。
+
+    这时， Object.getOwnPropertyDescriptors方法配合Object.defineProperties方法， 就可以实现正确拷贝。
+     */
+
+
+    const target02 = {};
+
+    // Object.defineProperties直接用来为一个对象新建或者修改属性。函数签名：Object.defineProperties(obj, props)
+    Object.defineProperties(target02, Object.getOwnPropertyDescriptors(source));
+    console.log(Object.getOwnPropertyDescriptor(target02, 'foo'));
+
+
+    // Object.getOwnPropertyDescriptors方法的另一个用处，是配合Object.create方法，将对象属性克隆到一个新对象。这属于浅拷贝。
+
+    const clone = Object.create(Object.getPrototypeOf(obj), Object.getOwnPropertyDescriptors(obj)); //克隆了obj
+
+    // 另外，Object.getOwnPropertyDescriptors方法可以实现一个对象继承另一个对象。以前，继承另一个对象，常常写成下面这样。
+
+    const prot = {};
+
+    const obj01 = {
+        __proto__: prot,
+        foo: 123,
+    };
+
+    // ES6 规定__proto__只有浏览器要部署， 其他环境不用部署。 如果去除__proto__， 上面代码就要改成下面这样。
+
+    const obj02 = Object.create(prot);
+    obj02.foo = 123;
+
+    // 或者
+
+    const obj03 = Object.assign(
+        Object.create(prot), {
+            foo: 123,
+        }
+    );
+
+    // 有了Object.getOwnPropertyDescriptors， 我们就有了另一种写法。
+
+    const obj04 = Object.create(
+        prot,
+        Object.getOwnPropertyDescriptors({
+            foo: 123,
+        })
+    );
+
+
+
 
 }
 
 // 8.1. __proto__属性，Object.setPrototypeOf()，Object.getPrototypeOf()
 {
 
+    // 该属性没有写入 ES6 的正文， 而是写入了附录， 原因是__proto__前后的双下划线， 说明它本质上是一个内部属性， 而不是一个正式的对外的 API， 只是由于浏览器广泛支持， 才被加入了 ES6。 标准明确规定， 只有浏览器必须部署这个属性， 其他运行环境不一定需要部署， 而且新的代码最好认为这个属性是不存在的。 因此， 无论从语义的角度， 还是从兼容性的角度， 都不要使用这个属性， 而是使用下面的Object.setPrototypeOf()（ 写操作）、 Object.getPrototypeOf()（ 读操作）、 Object.create()（ 生成操作） 代替。
+
+    // 实现上， __proto__调用的是Object.prototype.__proto__， 具体实现如下。
+
+    Object.defineProperty(Object.prototype, '__proto__', {
+        get() {
+            let _thisObj = Object(this);
+            return Object.getPrototypeOf(_thisObj);
+        },
+        set(proto) {
+            if (this === undefined || this === null) {
+                throw new TypeError();
+            }
+            if (!isObject(this)) {
+                return undefined;
+            }
+            if (!isObject(proto)) {
+                return undefined;
+            }
+            let status = Reflect.setPrototypeOf(this, proto);
+            if (!status) {
+                throw new TypeError();
+            }
+        },
+    });
+
+    function isObject(value) {
+        return Object(value) === value;
+    }
+
+    // 如果一个对象本身部署了__proto__属性， 该属性的值就是对象的原型。
+
+    // es6推荐的正式设置原型对象的方法
+    
+    // 格式: Object.setPrototypeOf(object, prototype);
+
+    // 如果第一个参数不是对象， 会自动转为对象。 但是由于返回的还是第一个参数， 所以这个操作不会产生任何效果。
+
+    Object.setPrototypeOf(1, {}) === 1; // true
+    Object.setPrototypeOf('foo', {}) === 'foo'; // true
+    Object.setPrototypeOf(true, {}) === true; // true
+
+    // 由于undefined和null无法转为对象， 所以如果第一个参数是undefined或null， 就会报错。
+
+    // Object.setPrototypeOf(undefined, {})
+    // TypeError: Object.setPrototypeOf called on null or undefined
+
+    // Object.setPrototypeOf(null, {})
+    // TypeError: Object.setPrototypeOf called on null or undefined
+
+    // 用法
+    const o = Object.setPrototypeOf({}, null);
+
+    // 该方法等同于下面的函数。
+
+    // function (obj, proto) {
+    //     obj.__proto__ = proto;
+    //     return obj;
+    // }
+
+
+    // Object.getProtptypeOf()
+
+    // 该方法与Object.setPrototypeOf方法配套， 用于读取一个对象的原型对象。Object.getPrototypeOf(obj);
+    // 下面是一个例子。
+
+    function Rectangle() {
+        // ...
+    }
+
+    const rec = new Rectangle();
+
+    Object.getPrototypeOf(rec) === Rectangle.prototype;
+    // true
+
+    Object.setPrototypeOf(rec, Object.prototype);
+    Object.getPrototypeOf(rec) === Rectangle.prototype;
+    // false
+    // 如果参数不是对象， 会被自动转为对象。
+
+    // 等同于 Object.getPrototypeOf(Number(1))
+    Object.getPrototypeOf(1);
+    // Number {[[PrimitiveValue]]: 0}
+
+    // 等同于 Object.getPrototypeOf(String('foo'))
+    Object.getPrototypeOf('foo');
+    // String {length: 0, [[PrimitiveValue]]: ""}
+
+    // 等同于 Object.getPrototypeOf(Boolean(true))
+    Object.getPrototypeOf(true);
+    // Boolean {[[PrimitiveValue]]: false}
+
+    Object.getPrototypeOf(1) === Number.prototype; // true
+    Object.getPrototypeOf('foo') === String.prototype; // true
+    Object.getPrototypeOf(true) === Boolean.prototype; // true
+    // 如果参数是undefined或null， 它们无法转为对象， 所以会报错。
+
+    // Object.getPrototypeOf(null)
+    // TypeError: Cannot convert undefined or null to object
+
+    // Object.getPrototypeOf(undefined)
+    // TypeError: Cannot convert undefined or null to object
+
 }
 
-// 9.1. super关键字
+// 9.1. super关键字: 指向当前对象的原型对象.注意，super关键字表示原型对象时，只能用在对象的方法之中，用在其他地方都会报错。
 {
+    const proto = {
+        foo: 'hello'
+    };
+
+    const obj = {
+        foo: 'world',
+        find() {
+            return super.foo;
+        }
+    };
+    console.log(obj.find()); // undefined
+    Object.setPrototypeOf(obj, proto); 
+    console.log(obj.find()); // 'hello'
 
 }
 
 // 10.1 Object.keys()，Object.values()，Object.entries()
 {
+    // 自己实现Object.entries方法， 非常简单。
+
+    // Generator函数的版本
+    function* entries(obj) {
+        for (let key of Object.keys(obj)) {
+            yield [key, obj[key]];
+        }
+    }
+
+    // 非Generator函数的版本
+    function entries2(obj) {
+        let arr = [];
+        for (let key of Object.keys(obj)) {
+            arr.push([key, obj[key]]);
+        }
+        return arr;
+    }
 
 }
 
 // 11.1 对象的扩展运算符
 {
+    let { x, y, ...z } = { x: 1, y: 2, a: 3, b: 4 };
+    console.log(x, y, z);
+
+    // 注意，解构赋值的拷贝是浅拷贝，即如果一个键的值是复合类型的值（数组、对象、函数）、那么解构赋值拷贝的是这个值的引用，而不是这个值的副本。
+
+    let obj = { a: { b: 1 } };
+    let { ...x } = obj;
+    obj.a.b = 2;
+    x.a.b; // 
+    
+    // 另外，扩展运算符的解构赋值，不能复制继承自原型对象的属性。
+
+    // 解构赋值的一个用处，是扩展某个函数的参数，引入其他操作。
+
+    function baseFunction({ a, b }) {
+        // ...
+    }
+    function wrapperFunction({ x, y, ...restConfig }) {
+        // 使用 x 和 y 参数进行操作
+        // 其余参数传给原始函数
+        return baseFunction(restConfig);
+    }
+    // 上面代码中，原始函数baseFunction接受a和b作为参数，函数wrapperFunction在baseFunction的基础上进行了扩展，能够接受多余的参数，并且保留原始函数的行为。
+
+
+    let aClone = { ...a };
+    // 等同于
+    let bClone = Object.assign({}, a);
+    
 
 }
