@@ -742,9 +742,9 @@
     // 注意，解构赋值的拷贝是浅拷贝，即如果一个键的值是复合类型的值（数组、对象、函数）、那么解构赋值拷贝的是这个值的引用，而不是这个值的副本。
 
     let obj = { a: { b: 1 } };
-    let { ...x } = obj;
+    let { ...x1 } = obj;
     obj.a.b = 2;
-    x.a.b; // 
+    console.log(x1.a.b); // 2
     
     // 另外，扩展运算符的解构赋值，不能复制继承自原型对象的属性。
 
@@ -761,9 +761,93 @@
     // 上面代码中，原始函数baseFunction接受a和b作为参数，函数wrapperFunction在baseFunction的基础上进行了扩展，能够接受多余的参数，并且保留原始函数的行为。
 
 
-    let aClone = { ...a };
+    // let aClone = { ...a1 };
     // 等同于
-    let bClone = Object.assign({}, a);
-    
+    // let bClone = Object.assign({}, a1);
+
+    // 上面的写法只是拷贝了对象实例的属性，如果想要完整克隆一个对象，还拷贝对象原型的属性，可以采用下面的写法
+
+    // 1. 写法一：
+    const clone1 = {
+        // 下面的__proto__在非浏览器环境不一定部署，所以我们推荐写法二和写法三
+        __proto__: Object.getPrototypeOf(obj),
+        ...obj
+    };
+
+    // 2.写法二：
+    const clone2 = Object.assign(
+        Object.create(Object.getPrototypeOf(obj)),
+        obj
+    );
+
+    // 3. 写法三
+    const clone = Object.create(
+        Object.getPrototypeOf(obj),
+        Object.getOwnPropertyDescriptors(obj)
+    );
+
+    // 扩展运算符可以用来合并两个对象;如果用户自定义的属性放在扩展运算符的后面，则扩展运算符内部的属性会被覆盖掉
+
+    let param01 = { first_name: 'lj', first_age: 10 };
+    let param02 = { last_name: 'alf', last_age: 1010 };
+    let ab = {
+        ...param01,
+        ...param02,
+    };
+    console.log(ab);
+
+    // 这用来修改现有对象部分的属性就很方便了。
+
+    let newVersion = {
+        ...previousVersion,
+        name: 'New Name' // Override the name property
+    };
+
+    // 如果把自定义属性放在扩展运算符前面， 就变成了设置新对象的默认属性值。
+
+    // let aWithDefaults = {
+    //     x: 1,
+    //     y: 2,
+    //     ...a
+    // };
+    // // 等同于
+    // let aWithDefaults = Object.assign({}, {
+    //     x: 1,
+    //     y: 2
+    // }, a);
+    // // 等同于
+    // let aWithDefaults = Object.assign({
+    //     x: 1,
+    //     y: 2
+    // }, a);
+
+    // 和数组的扩展运算符一样，对象的扩展运算符后面可以跟着表达式!! 写法很厉害
+    const obj = {
+        ...(x > 1 ? { a: 1 } : {}),
+        b:2,
+    };
+    // 如果扩展运算符后面是一个空对象，则没有任何效果。
+
+    // 如果扩展运算符的参数是 null 或 undefined， 这两个值会被忽略， 不会报错。
+
+    // 扩展运算符的参数对象之中， 如果有取值函数get， 这个函数是会执行的。
+
+    // 并不会抛出错误，因为 x 属性只是被定义，但没执行
+    let aWithXGetter = {
+        ...a,
+        get x() {
+            throw new Error('not throw yet');
+        }
+    };
+
+    // 会抛出错误，因为 x 属性被执行了
+    let runtimeError = {
+        ...a,
+        ...{
+            get x() {
+                throw new Error('throw now');
+            }
+        }
+    };
 
 }
