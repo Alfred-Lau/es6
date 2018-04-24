@@ -368,7 +368,7 @@ console.log(iframe.contentWindow.Symbol.for ('foo') === Symbol.for ('foo'))
     // 8. Symbol.iterator
 
     /* 
-      对象的Symbol.iterator属性，指向该对象的默认遍历器方法
+  对象的Symbol.iterator属性，指向该对象的默认遍历器方法
   */
 
     const myIterable = {};
@@ -381,8 +381,8 @@ console.log(iframe.contentWindow.Symbol.for ('foo') === Symbol.for ('foo'))
 
     // 对象进行for...of循环时，会调用Symbol.iterator方法，返回该对象的默认遍历器
 
-    class Collection{
-        *[Symbol.iterator]() {
+    class Collection {
+        * [Symbol.iterator ]() {
             let i = 0;
             while (this[i] !== undefined) {
                 yield this[i];
@@ -402,15 +402,15 @@ console.log(iframe.contentWindow.Symbol.for ('foo') === Symbol.for ('foo'))
     // 9. Symbol.toPrimitive
 
     /* 
-        对象的Symbol.toPrimitive属性，指向一个方法。该对象被转为原始类型的值的时候，会调用这个方法,返回该对象对应的原始类型值。
+    对象的Symbol.toPrimitive属性，指向一个方法。该对象被转为原始类型的值的时候，会调用这个方法,返回该对象对应的原始类型值。
 
-        Symbol.toPrimitive被调用的时候，会接受一个字符串参数，表示当前运算的模式，一共有三种模式。
+    Symbol.toPrimitive被调用的时候，会接受一个字符串参数，表示当前运算的模式，一共有三种模式。
 
-        - Number：该场合需要转换成数值
-        - String：该场合需要转换成字符串
-        - Default：该场合可以转成数值，也可以转成字符串
-    */
-   
+    - Number：该场合需要转换成数值
+    - String：该场合需要转换成字符串
+    - Default：该场合可以转成数值，也可以转成字符串
+  */
+
     let obj2 = {
         [Symbol.toPrimitive](hint) {
             switch (hint) {
@@ -419,7 +419,7 @@ console.log(iframe.contentWindow.Symbol.for ('foo') === Symbol.for ('foo'))
             case 'string':
                 return 'str';
             case 'default':
-                return 'default';        
+                return 'default';
             default:
                 throw new Error('msg');
             }
@@ -428,14 +428,93 @@ console.log(iframe.contentWindow.Symbol.for ('foo') === Symbol.for ('foo'))
 
     console.log(4 * obj2);
     console.log(3 + obj2);
-    console.log(String( obj2 ));
+    console.log(String(obj2));
 
     // 10. Symbol.toStringTag
 
     /* 
-        对象的Symbol.toStringTag属性，指向一个方法。在该对象上调用
-    */
+    对象的Symbol.toStringTag属性，指向一个方法。在该对象上调用Object.prototype.toString()的时候，如果这个属性存在，它的返回值会出现在toString方法返回的字符串核中，表示对象的类型。也就是说，这个属性可以用来定制[object Object]或者[object Array]中object后面的那个字符串
+
+  ES6 新增内置对象的Symbol.toStringTag属性值如下。
+
+  JSON[Symbol.toStringTag]：'JSON'
+  Math[Symbol.toStringTag]：'Math'
+  Module 对象M[Symbol.toStringTag]：'Module'
+  ArrayBuffer.prototype[Symbol.toStringTag]：'ArrayBuffer'
+  DataView.prototype[Symbol.toStringTag]：'DataView'
+  Map.prototype[Symbol.toStringTag]：'Map'
+  Promise.prototype[Symbol.toStringTag]：'Promise'
+  Set.prototype[Symbol.toStringTag]：'Set'
+  %TypedArray%.prototype[Symbol.toStringTag]：'Uint8Array'等
+  WeakMap.prototype[Symbol.toStringTag]：'WeakMap'
+  WeakSet.prototype[Symbol.toStringTag]：'WeakSet'
+  %MapIteratorPrototype%[Symbol.toStringTag]：'Map Iterator'
+  %SetIteratorPrototype%[Symbol.toStringTag]：'Set Iterator'
+  %StringIteratorPrototype%[Symbol.toStringTag]：'String Iterator'
+  Symbol.prototype[Symbol.toStringTag]：'Symbol'
+  Generator.prototype[Symbol.toStringTag]：'Generator'
+  GeneratorFunction.prototype[Symbol.toStringTag]：'GeneratorFunction'
+  */
+    // 例1: 
+    console.log({[Symbol.toStringTag]: 'Foo'}.toString());
+
+    // 例2：
+    class Collection2 {
+        get [Symbol.toStringTag ]() {
+            return 'xxx';
+        }
+    }
+
+    let xx = new Collection2();
+    console.log(Object.prototype.toString.call(xx));
 
     // 11. Symbol.unscopables
+
+    /* 
+    对象的Symbol.unscopables属性，指向一个对象。该对象指定了使用with关键字的时候，哪些属性会被with环境排除
+  
+  */
+
+    /*     Array.prototype[Symbol.unscopables]
+    // {   copyWithin: true,   entries: true,   fill: true,   find: true,
+    // findIndex: true,   includes: true,   keys: true }
+
+    Object.keys(Array.prototype[Symbol.unscopables])
+    // ['copyWithin', 'entries', 'fill', 'find', 'findIndex', 'includes', 'keys']
+    // 上面代码说明，数组有 7 个属性，会被with命令排除。
+
+    // 没有 unscopables 时
+    class MyClass {
+        foo() {
+            return 1
+        }
+    }
+
+    var foo = function () {
+        return 2
+    }
+
+    with (MyClass.prototype) {
+        foo() // 1
+    }
+
+    // 有 unscopables 时
+    class MyClass {
+        foo() {
+            return 1
+        }
+        get[Symbol.unscopables]() {
+            return {foo: true}
+        }
+    }
+
+    var foo = function () {
+        return 2
+    }
+
+    with (MyClass.prototype) {
+        foo() // 2
+    } */
+    // 上面代码通过指定Symbol.unscopables属性，使得with语法块不会在当前作用域寻找foo属性，即foo将指向外层作用域的变量。
 
 }
